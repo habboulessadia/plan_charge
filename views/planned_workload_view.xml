@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data >
+
+         <record model="ir.ui.view" id="imofer_planning_workload_list">
+            <field name="name">imofer planning workload list</field>
+            <field name="model">imofer.planned.workload</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="responsible_id"/>
+                    <field name="vehicle_id"/>
+                    <field name="driver_id"/>
+                    <field name="date"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+       <record model="ir.ui.view" id="imofer_planned_workload_form_view">
+            <field name="name">imofer.planned.workload.form</field>
+            <field name="model">imofer.planned.workload</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                            <button name="action_generate_order_line" id="generate_order_line" string="Generate planning workload lines"
+                                   type="object" class="oe_highlight mx-3 my-2" states="draft"/>
+                            <button name="confirm_pc" id="confirm_pc" string="Confirmed"
+                                   type="object" class="oe_highlight mx-3 my-2" states="draft"/>
+                                   type="object" class="oe_highlight mx-3 my-2" states="confirm"/>
+                            <field name="state" widget="statusbar" nolabel="1" statusbar_visible="draft,confirm"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-pencil-square-o"
+                                    name="manufacturing_order_view" type="object">
+                                <field name="manufacturing_order_count" widget="statinfo"
+                                       string="Manufacturing order"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-truck"
+                                    name="action_view_picking" type="object">
+                                <field name="delivery_count" widget="statinfo"
+                                       string="Delivery"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-pencil-square-o"
+                                    name="balance_quotation_view" type="object">
+                                <field name="reliquat_order_count" widget="statinfo"
+                                       string="Balance quotation"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-book"
+                                    name="orders_view" type="object">
+                                <field name="orders_count" widget="statinfo"
+                                       string="orders"/>
+                            </button>
+                       </div>
+                        <div>
+                            <h2>
+                                <field name="name"/>
+                            </h2>
+                        </div>
+                        <br/>
+                        <group>
+                            <group>
+                                <field name="responsible_id"/>
+                                <field name="vehicle_id"/>
+                                <field name="driver_id"/>
+                                <field name="orders_ids" widget="many2many_tags"/>
+                            </group>
+                            <group>
+                                <field name="date"/>
+                                <!--<field name="weight_progress" widget="progressbar"/>-->
+                            </group>
+                             <group>
+                                <field name="note"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="orders_lines" string="Quotations Lines">
+                                <field name="planned_workload_line_ids">
+                                    <tree>
+                                        <field name="quotation_id" string="Quotations"/>
+                                        <field name="customer_id"/>
+                                        <field name="product_template_id"/>
+                                        <field name="description"/>
+                                        <field name="uom_id"/>
+                                        <field name="quantity"/>
+                                        <field name="planned_quantity"/>
+                                        <field name="product_weight"/>
+                                        <field name="total_weight" sum="Total"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <!--            <div class="oe_chatter">-->
+                    <!--                <field name="message_follower_ids" widget="mail_followers"/>-->
+                    <!--                <field name="message_ids" widget="mail_thread"/>-->
+                    <!--            </div>-->
+                </form>
+            </field>
+        </record>
+
+        <record id="imofer_fleet_vehicle_view_form" model="ir.ui.view">
+            <field name="name">fleet.vehicle.form</field>
+            <field name="model">fleet.vehicle</field>
+            <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="vehicle_capacity" required="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- actions opening views on models -->
+
+        <record model="ir.actions.act_window" id="imofer_planning_workload_action_window">
+            <field name="name">Planning work load</field>
+            <field name="res_model">imofer.planned.workload</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem name="Planning workload" id="imofer_planning_workload_menu_root" parent="sale.sale_menu_root" sequence="3"/>
+        <menuitem name="Planning workload" id="imofer_planning_workload_menu_1" parent="imofer_planning_workload_menu_root"
+                  action="imofer_planning_workload_action_window" sequence="1"/>
+
+    </data>
+</odoo>

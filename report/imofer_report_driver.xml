@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_driver_planned_workload" model="ir.actions.report">
+            <field name="name">Driver Planned Workload</field>
+            <field name="model">imofer.planned.workload</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">imofer_plan_charge.report_driver_planned_workload</field>
+            <field name="report_file">imofer_plan_charge.report_driver_planned_workload</field>
+            <field name="print_report_name">'Planned workload - %s' % (object.name) </field>
+            <field name="binding_model_id" ref="model_imofer_planned_workload"/>
+            <field name="binding_type">report</field>
+        </record>
+
+         <record id="action_report_stockkeeper_planned_workload" model="ir.actions.report">
+            <field name="name">Stock keeper Planned Workload</field>
+            <field name="model">imofer.planned.workload</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">imofer_plan_charge.report_driver_planned_workload</field>
+            <field name="report_file">imofer_plan_charge.report_driver_planned_workload</field>
+            <field name="print_report_name">'Planned workload - %s' % (object.name) </field>
+            <field name="binding_model_id" ref="model_imofer_planned_workload"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <template id="report_driver_planned_workload">
+                    <t t-call="web.html_container">
+                        <t t-foreach="docs" t-as="doc">
+                            <t t-call="web.external_layout">
+                                 <div class="page">
+                                      <h2 class="mt16">
+                                        <t t-if="not (env.context.get('proforma', False) or is_pro_forma)">
+                                            <span>Planned workload # </span>
+                                        </t>
+                                        <span t-field="doc.name"/>
+                                        </h2>
+                                </div>
+
+                                <div class="page">
+                                    <div class="oe_structure"/>
+
+                                    <div class="row mt32 mb32" id="informations">
+                                        <div class="col-auto col-2 mw-100 mb-2">
+                                            <strong> Planned Workload Date:</strong>
+                                            <p class="m-0" t-field="doc.date"/>
+                                        </div>
+                                        <div  class="col-auto col-3 mw-100 mb-2">
+                                            <strong>Vehicle:</strong>
+                                            <p class="m-0" t-field="doc.vehicle_id"/>
+                                        </div>
+                                        <div  class="col-auto col-3 mw-100 mb-2">
+                                            <strong>Driver:</strong>
+                                            <p class="m-0" t-field="doc.driver_id"/>
+                                        </div>
+                                    </div>
+
+                                    <table class="table table-sm o_main_table">
+                                        <thead style="display: table-row-group">
+                                            <tr>
+                                                <tr>
+                                                    <th name="th_quotation">Quotation</th>
+                                                    <th name="th_customer">Customer</th>
+                                                    <th name="th_description">Description</th>
+                                                    <th name="th_quantity_planned">
+                                                        <span>Quantity planned</span>
+                                                    </th>
+                                                    <th name="th_weight">
+                                                        <span>Weight</span>
+                                                    </th>
+                                                </tr>
+                                            </tr>
+                                        </thead>
+
+                                        <t t-foreach="doc.planned_workload_line_ids" t-as="orderline">
+                                                <tbody class="sale_tbody">
+                                                    <tr>
+                                                        <td scope="row">
+                                                            <t t-esc="orderline.quotation_id.name"/>
+                                                        </td>
+                                                        <td scope="row">
+                                                            <t t-esc="orderline.customer_id.name"/>
+                                                        </td>
+                                                        <td scope="row">
+                                                            <t t-esc="orderline.description"/>
+                                                        </td>
+                                                        <td scope="row">
+                                                            <t t-esc="orderline.planned_quantity"/>
+                                                        </td>
+                                                        <td scope="row">
+                                                            <t t-esc="orderline.product_weight"/>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                        </t>
+                                    </table>
+                                    <p>
+                                        <div class="clearfix" name="so_total_summary">
+                                            <div id="total" class="row" name="total">
+                                                <div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-7 col-md-5'} ml-auto">
+                                                    <table class="table table-sm">
+                                                        <strong class="mr16">Total :</strong>
+                                                        <t t-esc="doc.weight_progress"/>
+                                                            Kg
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </p>
+                                    <p>
+                                        <div class="row mt32 mb32" id="note">
+                                                <strong class="mr16"> Note:</strong>
+                                                    <t t-esc="doc.note"/>
+                                        </div>
+                                    </p>
+                                </div>
+                            </t>
+                        </t>
+                    </t>
+        </template>
+    </data>
+</odoo>

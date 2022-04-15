@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_imofer_planned_workload,imofer.planned.workload,model_imofer_planned_workload,base.group_user,1,1,1,1
+access_imofer_planned_workload_line,imofer.planned.workload.line,model_imofer_planned_workload_line,base.group_user,1,1,1,1

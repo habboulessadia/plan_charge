@@ -1,0 +1,18 @@
+ <template id="report_driver_planned_workload">
+                <t t-call="web.html_container">
+                    <t t-foreach="docs" t-as="doc">
+                        <t t-call="web.external_layout">
+                            <div class="page">
+                                <h2 t-field="doc.name"/>
+                                <p> <span t-field="doc.date"/> </p>
+                                <h3>driver:</h3>
+                                <ul>
+                                    <t t-foreach="doc.driver_id" t-as="driver">
+                                        <li><span t-field="doc.driver_id"/></li>
+                                    </t>
+                                </ul>
+                            </div>
+                        </t>
+                    </t>
+                </t>
+        </template>
