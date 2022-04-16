@@ -26,7 +26,7 @@ class plannedWorkload(models.Model):
     picking_ids = fields.One2many('stock.picking', 'planned_workload_id', string="Picking",
                                   compute="_compute_picking_ids")
     manufacturing_ids = fields.One2many('mrp.production', 'planned_workload_id', string="Manufacturing")
-    blance_reliquat_ids = fields.One2many('sale.order', 'planned_workload_id', string="Reliquat")
+    reliquat_ids = fields.One2many('sale.order', 'planned_workload_id', compute="confirm_pc",string="Reliquat")
     invoices_ids = fields.One2many('account.move', 'planned_workload_id', string="invoices",
                                    compute="_compute_invoices_ids")
     # smart buttons
@@ -91,7 +91,7 @@ class plannedWorkload(models.Model):
 
     def compute_reliquat_order(self):
         for r in self:
-            r.reliquat_order_count = len(r.blance_reliquat_ids)
+            r.reliquat_order_count = len(r.reliquat_ids)
 
     def confirm_planning_workload(self):
         for r in self:
@@ -104,12 +104,12 @@ class plannedWorkload(models.Model):
     def balance_quotation_view(self):
         self.ensure_one()
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_orders")
-        orders = self.mapped('blance_reliquat_ids')
+        orders = self.mapped('reliquat_ids')
         if len(orders) == 1:
             action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
             action['res_id'] = orders.id
         else:
-            action['domain'] = [('id', 'in', self.mapped('blance_reliquat_ids.id'))]
+            action['domain'] = [('id', 'in', self.mapped('reliquat_ids.id'))]
             action['context'] = dict(self._context, create=False)
         return action
 
@@ -171,23 +171,60 @@ class plannedWorkload(models.Model):
         return action
 
     def manufacturing_order_view(self):
-        pass
+        self.ensure_one()
+        result = {
+            "type": "ir.actions.act_window",
+            "res_model": "mrp.production",
+            "domain": [['id', 'in', self.manufacturing_ids.ids]],
+            "name": "Manufacturing Orders",
+            'view_mode': 'tree,form',
+            "context": {'default_analytic_account_id': self.id},
+        }
+        if len(self.manufacturing_ids) == 1:
+            result['view_mode'] = 'form'
+            result['res_id'] = self.manufacturing_ids.id
+        return result
 
     def invoices_view(self):
-        pass
+        invoices = self.mapped('invoices_ids')
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        if len(invoices) > 1:
+            action['domain'] = [('id', 'in', invoices.ids)]
+        elif len(invoices) == 1:
+            form_view = [(self.env.ref('account.view_move_form').id, 'form')]
+            if 'views' in action:
+                action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
+            else:
+                action['views'] = form_view
+            action['res_id'] = invoices.id
+        else:
+            action = {'type': 'ir.actions.act_window_close'}
+
+        context = {
+            'default_move_type': 'out_invoice',
+        }
+        action['context'] = context
+        return action
 
     def confirm_pc(self):
+        reliquat = False
         for r in self.planned_workload_line_ids:
             if r.quantity > r.planned_quantity:
-                sale_order = self.env['sale.order'].create({
-                    'partner_id': r.customer_id,
-                    'date_order': fields.Datetime.now(),
-                    'order_line': [(0, 0, {
-                        'product_id': r.product_template_id.id,
-                        'product_uom_qty': r.quantity - r.planned_quantity,
-                    })]
-                })
-                self.blance_reliquat_ids = sale_order
+                reliquat = True
+                break
+        if reliquat:
+            sale_order = self.env['sale.order'].create({
+                'partner_id': r.customer_id.id,
+                'date_order': fields.Datetime.now(),
+                'order_line': [(0, 0, {
+                    'product_id': r.product_template_id.id,
+                    'product_uom_qty': r.quantity - r.planned_quantity,
+                }) for r in self.planned_workload_line_ids
+                               if r.quantity > r.planned_quantity]
+            })
+            self.reliquat_ids = sale_order
+        else:
+            self.reliquat_ids = False
 
         for r in self:
             r.state = 'confirm'
@@ -219,3 +256,14 @@ class plannedWorkload(models.Model):
     def _compute_picking_ids(self):
         for order in self:
             order.picking_ids = order.orders_ids.picking_ids
+
+    def _compute_invoices_ids(self):
+        for order in self:
+            order.invoices_ids = order.orders_ids.invoice_ids
+
+    def _compute_mo_ids(self):
+        for order in self:
+            self.manufacturing_ids = self.env['mrp.production'].search([
+                ('origin', '=', order.orders_ids.name),
+                #('product_id', '=', self.product_manu.id),
+            ])

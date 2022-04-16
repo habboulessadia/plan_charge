@@ -40,7 +40,7 @@
                             <button class="oe_stat_button" icon="fa-book"
                                     name="invoices_view" type="object">
                                 <field name="invoice_count" widget="statinfo"
-                                       string="orders"/>
+                                       string="Invoices"/>
                             </button>
                             <button class="oe_stat_button" icon="fa-truck"
                                     name="action_view_picking" type="object">
