@@ -1,6 +1,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 
+
 class plannedWorkload(models.Model):
     _name = 'imofer.planned.workload'
 
@@ -18,22 +19,22 @@ class plannedWorkload(models.Model):
                                                 states={'cancel': [('readonly', True)], 'done': [('readonly', True)]},
                                                 track_visibility='onchange')
 
-    customer_id = fields.Many2one(string="Customer", related='planned_workload_line_ids.customer_id')
     state = fields.Selection([('draft', "Draft"), ('confirm', "Confirmed"), ('canceled', "Canceled")], string="State",
                              default='draft')
     note = fields.Text(string='Note')
     orders_ids = fields.One2many('sale.order', 'planned_workload_id', string="Orders")
-    picking_ids = fields.One2many('stock.picking','planned_workload_id', string="Picking")
-    manufacturing_ids = fields.One2many('mrp.production','planned_workload_id', string="Manufacturing")
-    blance_reliquat_ids = fields.One2many('sale.order','planned_workload_id', string="Reliquat")
-    invoices_ids = fields.One2many('account.move','planned_workload_id', string="invoices")
+    picking_ids = fields.One2many('stock.picking', 'planned_workload_id', string="Picking",
+                                  compute="_compute_picking_ids")
+    manufacturing_ids = fields.One2many('mrp.production', 'planned_workload_id', string="Manufacturing")
+    blance_reliquat_ids = fields.One2many('sale.order', 'planned_workload_id', string="Reliquat")
+    invoices_ids = fields.One2many('account.move', 'planned_workload_id', string="invoices",
+                                   compute="_compute_invoices_ids")
     # smart buttons
     orders_count = fields.Integer('Orders count', compute='compute_orders_count')
     invoice_count = fields.Integer('Invoice count', compute='compute_invoice_count')
     delivery_count = fields.Integer('Delivery count', compute='compute_delivery_count')
     manufacturing_order_count = fields.Integer('Manufacturing order count', compute='compute_manufacturing_order_count')
     reliquat_order_count = fields.Integer('Reliquat count', compute='compute_reliquat_order')
-
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -124,10 +125,21 @@ class plannedWorkload(models.Model):
             action['context'] = dict(self._context, create=False)
         return action
 
-    def action_get_stock_picking(self):
-        action = self.env['ir.actions.act_window']._for_xml_id('stock.action_picking_tree_all')
-        action['domain'] = [('id', '=', self.picking_ids.id)]
-        return action
+    # def action_get_stock_picking(self):
+    #     self.ensure_one()
+    #     action = self.env["ir.actions.actions"]._for_xml_id("stock.action_picking_tree_all")
+    #     pickings = self.mapped('picking_ids')
+    #     if len(pickings) > 1:
+    #         action['domain'] = [('id', 'in', pickings.ids)]
+    #     elif pickings:
+    #         form_view = [(self.env.ref('stock.view_picking_form').id, 'form')]
+    #         if 'views' in action:
+    #             action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
+    #         else:
+    #             action['views'] = form_view
+    #         action['res_id'] = pickings.id
+    #     action['context'] = dict(self._context, default_origin=self.name, create=False)
+    #     return action
 
     def action_view_picking(self):
         return self._get_action_view_picking(self.picking_ids)
@@ -145,26 +157,30 @@ class plannedWorkload(models.Model):
         elif pickings:
             form_view = [(self.env.ref('stock.view_picking_form').id, 'form')]
             if 'views' in action:
-                action['views'] = form_view + [(state,view) for state,view in action['views'] if view != 'form']
+                action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
             else:
                 action['views'] = form_view
             action['res_id'] = pickings.id
             picking_id = pickings.filtered(lambda l: l.picking_type_id.code == 'outgoing')
             if picking_id:
-              picking_id = picking_id[0]
+                picking_id = picking_id[0]
             else:
-              picking_id = pickings[0]
-            action['context'] = dict(self._context, default_picking_type_id=picking_id.picking_type_id.id, default_origin=self.name)
+                picking_id = pickings[0]
+            action['context'] = dict(self._context, default_picking_type_id=picking_id.picking_type_id.id,
+                                     default_origin=self.name)
         return action
 
     def manufacturing_order_view(self):
+        pass
+
+    def invoices_view(self):
         pass
 
     def confirm_pc(self):
         for r in self.planned_workload_line_ids:
             if r.quantity > r.planned_quantity:
                 sale_order = self.env['sale.order'].create({
-                    'partner_id': self.customer_id.id,
+                    'partner_id': r.customer_id,
                     'date_order': fields.Datetime.now(),
                     'order_line': [(0, 0, {
                         'product_id': r.product_template_id.id,
@@ -172,6 +188,7 @@ class plannedWorkload(models.Model):
                     })]
                 })
                 self.blance_reliquat_ids = sale_order
+
         for r in self:
             r.state = 'confirm'
 
@@ -199,3 +216,6 @@ class plannedWorkload(models.Model):
             raise ValidationError(
                 ('Sale order required'))
 
+    def _compute_picking_ids(self):
+        for order in self:
+            order.picking_ids = order.orders_ids.picking_ids

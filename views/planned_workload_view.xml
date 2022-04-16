@@ -37,6 +37,11 @@
                                 <field name="manufacturing_order_count" widget="statinfo"
                                        string="Manufacturing order"/>
                             </button>
+                            <button class="oe_stat_button" icon="fa-book"
+                                    name="invoices_view" type="object">
+                                <field name="invoice_count" widget="statinfo"
+                                       string="orders"/>
+                            </button>
                             <button class="oe_stat_button" icon="fa-truck"
                                     name="action_view_picking" type="object">
                                 <field name="delivery_count" widget="statinfo"
@@ -45,7 +50,7 @@
                             <button class="oe_stat_button" icon="fa-pencil-square-o"
                                     name="balance_quotation_view" type="object">
                                 <field name="reliquat_order_count" widget="statinfo"
-                                       string="Balance quotation"/>
+                                       string="Quotation"/>
                             </button>
                             <button class="oe_stat_button" icon="fa-book"
                                     name="orders_view" type="object">
