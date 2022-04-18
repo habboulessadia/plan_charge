@@ -230,7 +230,8 @@ class plannedWorkload(models.Model):
             r.state = 'confirm'
 
     def cancel_pc(self):
-        pass
+        for r in self:
+            r.state = 'canceled'
 
     def action_generate_order_line(self):
         if self.orders_ids:

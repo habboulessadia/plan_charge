@@ -27,6 +27,7 @@
                                    type="object" class="oe_highlight mx-3 my-2" states="draft"/>
                             <button name="confirm_pc" id="confirm_pc" string="Confirmed"
                                    type="object" class="oe_highlight mx-3 my-2" states="draft"/>
+                            <button name="cancel_pc" id="cancel_pc" string="Cancel"
                                    type="object" class="oe_highlight mx-3 my-2" states="confirm"/>
                             <field name="state" widget="statusbar" nolabel="1" statusbar_visible="draft,confirm"/>
                     </header>
@@ -73,7 +74,7 @@
                             </group>
                             <group>
                                 <field name="date"/>
-                                <!--<field name="weight_progress" widget="progressbar"/>-->
+                                <field name="weight_progress" widget="progressbar"/>
                             </group>
                              <group>
                                 <field name="note"/>

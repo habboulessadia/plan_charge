@@ -113,6 +113,7 @@ class TestPlanCharge(common.TransactionCase):
             'name': "partner2",
             'email': "partner2@yourcompany.example.com",
         })
+
         self.so2 = self.env['sale.order'].create({
             'name': 'SO/02/02',
             'reference': 'so2',
@@ -175,10 +176,11 @@ class TestPlanCharge(common.TransactionCase):
             'date' : time.strftime('%Y-06-06'),
             'orders_ids' : self.so1
         })
+        self.sopc2 = [self.so2, self.so3]
         self.pc2 = self.PlanningWorkload.create({
             'vehicle_id': self.vehicle2.id,
             'date': time.strftime('%Y-10-11'),
-            'orders_ids': self.so2
+            'orders_ids': [(6, 0, [s.id for s in self.sopc2])]
         })
         self.pc3 = self.PlanningWorkload.create({
             'vehicle_id': self.vehicle1.id,
@@ -252,12 +254,10 @@ class TestPlanCharge(common.TransactionCase):
             self.pc4.confirm_pc()
 
         #creation manufacturing order
-        self.company_a = self.env['res.company'].create({'name': 'Company A'})
         self.mo = self.env['mrp.production'].create({
             'origin' : self.so4.name,
             'product_id': self.article4_variant.id,
             'product_uom_id': 18,
-            'company_id': self.company_a.id,
         })
         ## tester manufacturing_ids
         self.assertTrue(self.pc4.manufacturing_ids, 'manufacturing_ids not generated')
